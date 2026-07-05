@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@darrellvs/node-wave-link-sdk": "^2.0.4",
+    "ws": "^8.21.0"
+  }
+}

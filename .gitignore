@@ -1,0 +1,15 @@
+# .NET
+mixer/bin/
+mixer/obj/
+*.user
+*.suo
+*.cache
+
+# Node.js
+server/node_modules/
+
+# مجلد النشر
+mixer v1/
+
+# ملفات النظام
+.vs/
