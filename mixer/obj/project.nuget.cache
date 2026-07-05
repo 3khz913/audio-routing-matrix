@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "4tfiAu4vg3c=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Admin\\Desktop\\mixer-project\\mixer\\mixer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Admin\\.nuget\\packages\\melanchall.drywetmidi\\8.0.3\\melanchall.drywetmidi.8.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

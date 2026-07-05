@@ -1,0 +1,10 @@
+C:\Users\Admin\Desktop\mixer v1\mixer.pdb
+C:\Users\Admin\Desktop\mixer v1\Melanchall_DryWetMidi_Native32.dll
+C:\Users\Admin\Desktop\mixer v1\Melanchall_DryWetMidi_Native64.dll
+C:\Users\Admin\Desktop\mixer v1\Melanchall_DryWetMidi_Native64.dylib
+C:\Users\Admin\Desktop\mixer v1\D3DCompiler_47_cor3.dll
+C:\Users\Admin\Desktop\mixer v1\PenImc_cor3.dll
+C:\Users\Admin\Desktop\mixer v1\PresentationNative_cor3.dll
+C:\Users\Admin\Desktop\mixer v1\vcruntime140_cor3.dll
+C:\Users\Admin\Desktop\mixer v1\wpfgfx_cor3.dll
+C:\Users\Admin\Desktop\mixer v1\mixer.exe
