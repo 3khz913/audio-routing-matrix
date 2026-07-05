@@ -62,3 +62,6 @@ Each control (a send-level cell, or a source's master volume/mute) has a
 `MidiMappingStorage` persists these to `%LocalAppData%\mixer\midi_mappings.json`,
 so you can hand-edit or back up mappings if needed.
 "# audio-routing-matrix" 
+
+
+- [@darrellvs/node-wave-link-sdk](https://github.com/darrellvs/node-wave-link-sdk) — Node.js wrapper for Wave Link's JSON‑RPC interface.
