@@ -223,22 +223,28 @@ namespace mixer
         private string GetServerDirectory()
         {
             var appDir = GetApplicationDirectory();
-            var serverDir = Path.Combine(appDir, "server");
-            if (Directory.Exists(serverDir))
-                return serverDir;
 
-            // أثناء التطوير: مجلد server بجانب المشروع
+            // 1. أثناء النشر: مجلد server بجانب التطبيق
+            var publishServer = Path.Combine(appDir, "server");
+            if (Directory.Exists(publishServer))
+                return publishServer;
+
+            // 2. في مجلد النشر: server في المجلد الأب
+            var parentServer = Path.GetFullPath(Path.Combine(appDir, "..", "server"));
+            if (Directory.Exists(parentServer))
+                return parentServer;
+
+            // 3. أثناء التطوير: مجلد server بجانب المشروع
             var devServer = Path.GetFullPath(Path.Combine(appDir, "..", "..", "..", "..", "server"));
             if (Directory.Exists(devServer))
                 return devServer;
 
-            throw new DirectoryNotFoundException($"Server directory not found. Expected: {serverDir}");
+            throw new DirectoryNotFoundException($"Server directory not found.");
         }
 
         private static string GetApplicationDirectory()
         {
-            var assemblyPath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            return Path.GetDirectoryName(assemblyPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            return AppDomain.CurrentDomain.BaseDirectory;
         }
 
         public static void ApplyLanguage(string lang)
