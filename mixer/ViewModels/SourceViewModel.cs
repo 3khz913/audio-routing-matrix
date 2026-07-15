@@ -49,18 +49,42 @@ namespace mixer.ViewModels
         /// <summary>MIDI mapping key for the master volume/mute control of this source.</summary>
         public string MappingKey => $"{Id}|master";
 
+        private double _vuLeft;
+        public double VuLeft
+        {
+            get => _vuLeft;
+            set => SetField(ref _vuLeft, value);
+        }
+
+        private double _vuRight;
+        public double VuRight
+        {
+            get => _vuRight;
+            set => SetField(ref _vuRight, value);
+        }
+
         public ObservableCollection<CellViewModel> Cells { get; } = new();
 
         public event EventHandler<double>? MasterVolumeChangedByUser;
         public event EventHandler<bool>? MuteChangedByUser;
+        public event EventHandler? EditRequested;
 
         public RelayCommand ToggleMuteCommand { get; }
+        public RelayCommand EditCommand { get; }
+
+        public bool HasMidiMapping
+        {
+            get => _hasMidiMapping;
+            set => SetField(ref _hasMidiMapping, value);
+        }
+        private bool _hasMidiMapping;
 
         public SourceViewModel(string id, string name)
         {
             Id = id;
             _name = name;
             ToggleMuteCommand = new RelayCommand(_ => IsMuted = !IsMuted);
+            EditCommand = new RelayCommand(_ => EditRequested?.Invoke(this, EventArgs.Empty));
         }
 
         public CellViewModel? GetCell(string mixId)

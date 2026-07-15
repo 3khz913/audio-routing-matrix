@@ -104,6 +104,34 @@ namespace mixer.Services
             }
         }
 
+        public void SaveToFile(string filePath)
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(_mappings, JsonOptions);
+                File.WriteAllText(filePath, json);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to export MIDI mappings", ex);
+            }
+        }
+
+        public void LoadFromFile(string filePath)
+        {
+            try
+            {
+                var json = File.ReadAllText(filePath);
+                var loaded = JsonSerializer.Deserialize<Dictionary<string, List<MidiMapping>>>(json, JsonOptions);
+                if (loaded != null) _mappings = loaded;
+                Save();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to import MIDI mappings", ex);
+            }
+        }
+
         private void Load()
         {
             try

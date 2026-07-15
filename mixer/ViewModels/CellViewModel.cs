@@ -39,12 +39,21 @@ namespace mixer.ViewModels
         }
         private bool _hasMidiMapping;
 
+        private bool _isRouted = true;
+        public bool IsRouted
+        {
+            get => _isRouted;
+            set => SetField(ref _isRouted, value);
+        }
+
         public event EventHandler<double>? VolumeChangedByUser;
         public event EventHandler<bool>? MuteChangedByUser;
         public event EventHandler? EditRequested;
+        public event EventHandler? AddToMixRequested;
 
         public RelayCommand EditCommand { get; }
         public RelayCommand ToggleMuteCommand { get; }
+        public RelayCommand AddToMixCommand { get; }
 
         public CellViewModel(string inputId, string mixId)
         {
@@ -53,6 +62,7 @@ namespace mixer.ViewModels
 
             EditCommand = new RelayCommand(_ => EditRequested?.Invoke(this, EventArgs.Empty));
             ToggleMuteCommand = new RelayCommand(_ => IsMuted = !IsMuted);
+            AddToMixCommand = new RelayCommand(_ => AddToMixRequested?.Invoke(this, EventArgs.Empty));
         }
 
         public void UpdateFromService(double volume)
@@ -67,6 +77,11 @@ namespace mixer.ViewModels
             _updatingFromService = true;
             try { IsMuted = isMuted; }
             finally { _updatingFromService = false; }
+        }
+
+        public void UpdateRoutedFromService(bool routed)
+        {
+            IsRouted = routed;
         }
     }
 }

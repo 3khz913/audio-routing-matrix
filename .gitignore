@@ -13,3 +13,5 @@ mixer v1/
 
 # ملفات النظام
 .vs/
+*.pubxml.user
+*.DotSettings.user

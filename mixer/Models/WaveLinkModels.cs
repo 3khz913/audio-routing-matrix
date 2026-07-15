@@ -13,6 +13,7 @@ namespace mixer.Models
         public List<InputDto> Inputs { get; set; } = new();
         public List<MixDto> Mixes { get; set; } = new();
         public List<CellDto> Cells { get; set; } = new();
+        public List<MicDeviceDto> MicDevices { get; set; } = new();
     }
 
     public class InputDto
@@ -27,7 +28,7 @@ namespace mixer.Models
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public bool IsMuted { get; set; }  // 🆕 تمت الإضافة
+        public bool IsMuted { get; set; }
     }
 
     public class CellDto
@@ -35,6 +36,36 @@ namespace mixer.Models
         public string InputId { get; set; } = string.Empty;
         public string MixId { get; set; } = string.Empty;
         public double Volume { get; set; }
+        public bool IsMuted { get; set; }
+        public bool Routed { get; set; } = true;
+    }
+
+    public class LevelMeterData
+    {
+        public List<LevelMeterChannel> Channels { get; set; } = new();
+    }
+
+    public class LevelMeterChannel
+    {
+        public string Id { get; set; } = string.Empty;
+        public double Left { get; set; }
+        public double Right { get; set; }
+    }
+
+    public class FocusedAppData
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string ChannelId { get; set; } = string.Empty;
+    }
+
+    public class MicDeviceDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public string DeviceName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public double Gain { get; set; }
+        public double MicPcMix { get; set; }
         public bool IsMuted { get; set; }
     }
 }

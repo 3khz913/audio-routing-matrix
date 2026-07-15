@@ -27,10 +27,20 @@ namespace mixer.ViewModels
         }
         private bool _updatingFromService;
 
-        /// <summary>يُرفع عندما يغير المستخدم حالة الكتم (وليس تحديثاً من الخدمة).</summary>
-        public event EventHandler<bool>? MuteChangedByUser;
+        public string MappingKey => $"mix|{Id}";
 
-        /// <summary>لتحديث الكتم من الخدمة دون إعادة إرسال.</summary>
+        public event EventHandler<bool>? MuteChangedByUser;
+        public event EventHandler? EditRequested;
+
+        public RelayCommand EditCommand { get; }
+
+        public bool HasMidiMapping
+        {
+            get => _hasMidiMapping;
+            set => SetField(ref _hasMidiMapping, value);
+        }
+        private bool _hasMidiMapping;
+
         public void UpdateMuteFromService(bool isMuted)
         {
             _updatingFromService = true;
@@ -42,6 +52,7 @@ namespace mixer.ViewModels
         {
             Id = id;
             _name = name;
+            EditCommand = new RelayCommand(_ => EditRequested?.Invoke(this, EventArgs.Empty));
         }
     }
 }

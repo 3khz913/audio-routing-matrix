@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,16 +8,23 @@ using System.Windows;
 using System.Windows.Threading;
 using mixer.Services;
 using mixer.ViewModels;
+using Forms = System.Windows.Forms;
 
 namespace mixer
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         public static WaveLinkService WaveLinkService { get; private set; } = null!;
         public static MidiService MidiService { get; private set; } = null!;
         public static MidiMappingStorage MidiMappingStorage { get; private set; } = null!;
+        public static SettingsStorage SettingsStorage { get; private set; } = null!;
 
         private Process? _serverProcess;
+        private Forms.NotifyIcon? _notifyIcon;
+        private MainWindow? _mainWindow;
+
+        private static ResourceDictionary? _currentThemeDict;
+        private static ResourceDictionary? _currentLangDict;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
@@ -37,6 +45,11 @@ namespace mixer
             WaveLinkService = new WaveLinkService();
             MidiService = new MidiService();
             MidiMappingStorage = new MidiMappingStorage();
+            SettingsStorage = new SettingsStorage();
+
+            // تطبيق الثيم المحفوظ
+            ApplyTheme(SettingsStorage.Settings.Theme);
+            ApplyLanguage(SettingsStorage.Settings.Language);
 
             // بدء محاولة الاتصال بالسيرفر
             _ = WaveLinkService.ConnectAsync();
@@ -45,8 +58,11 @@ namespace mixer
             var mainVM = new MainViewModel(WaveLinkService, MidiService, MidiMappingStorage);
 
             // إنشاء النافذة الرئيسية وعرضها
-            var window = new MainWindow { DataContext = mainVM };
-            window.Show();
+            _mainWindow = new MainWindow { DataContext = mainVM };
+            _mainWindow.StateChanged += OnMainWindowStateChanged;
+            _mainWindow.Closed += OnMainWindowClosed;
+            CreateSystrayIcon();
+            _mainWindow.Show();
 
             base.OnStartup(e);
         }
@@ -225,19 +241,117 @@ namespace mixer
             return Path.GetDirectoryName(assemblyPath) ?? AppDomain.CurrentDomain.BaseDirectory;
         }
 
+        public static void ApplyLanguage(string lang)
+        {
+            ReplaceResource(ref _currentLangDict,
+                lang == "ar" ? "Views/Strings.ar.xaml" : "Views/Strings.en.xaml");
+        }
+
+        public static void ApplyTheme(string theme)
+        {
+            ReplaceResource(ref _currentThemeDict,
+                theme == "light" ? "Views/ThemeLight.xaml" : "Views/Theme.xaml");
+        }
+
+        private static void ReplaceResource(ref ResourceDictionary? field, string path)
+        {
+            var dicts = System.Windows.Application.Current.Resources.MergedDictionaries;
+
+            if (field != null)
+                dicts.Remove(field);
+
+            field = new ResourceDictionary { Source = new Uri(path, UriKind.Relative) };
+            dicts.Add(field);
+        }
+
+        public static void OpenSettings()
+        {
+            var settingsVM = new SettingsViewModel(
+                SettingsStorage,
+                () => ApplyTheme(SettingsStorage.Settings.Theme),
+                () => ApplyLanguage(SettingsStorage.Settings.Language)
+            );
+
+            var window = new Views.SettingsWindow
+            {
+                DataContext = settingsVM,
+                Owner = Current.MainWindow
+            };
+
+            settingsVM.RequestClose += () => window.Close();
+            window.ShowDialog();
+        }
+
         protected override void OnExit(ExitEventArgs e)
         {
             StopServer();
+            _notifyIcon?.Dispose();
             WaveLinkService?.Dispose();
             MidiService?.Dispose();
             Logger.Info("Application exiting.");
             base.OnExit(e);
         }
 
+        private void CreateSystrayIcon()
+        {
+            _notifyIcon = new Forms.NotifyIcon
+            {
+                Text = "mixer",
+                Icon = System.Drawing.SystemIcons.Application,
+                Visible = true
+            };
+
+            _notifyIcon.DoubleClick += (_, _) =>
+            {
+                if (_mainWindow != null)
+                {
+                    _mainWindow.Show();
+                    _mainWindow.WindowState = WindowState.Normal;
+                    _mainWindow.Activate();
+                }
+            };
+
+            var contextMenu = new Forms.ContextMenuStrip();
+            contextMenu.Items.Add("Show", null, (_, _) =>
+            {
+                if (_mainWindow != null)
+                {
+                    _mainWindow.Show();
+                    _mainWindow.WindowState = WindowState.Normal;
+                    _mainWindow.Activate();
+                }
+            });
+            contextMenu.Items.Add(new Forms.ToolStripSeparator());
+            contextMenu.Items.Add("Exit", null, (_, _) =>
+            {
+                _notifyIcon!.Visible = false;
+                if (_mainWindow != null)
+                    _mainWindow.Close();
+                else
+                    Shutdown();
+            });
+
+            _notifyIcon.ContextMenuStrip = contextMenu;
+        }
+
+        private void OnMainWindowStateChanged(object? sender, EventArgs e)
+        {
+            if (_mainWindow?.WindowState == WindowState.Minimized)
+            {
+                _mainWindow.Hide();
+            }
+        }
+
+        private void OnMainWindowClosed(object? sender, EventArgs e)
+        {
+            _notifyIcon?.Dispose();
+            _notifyIcon = null;
+        }
+
         private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
             Logger.Error("Unhandled UI exception", e.Exception);
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 "An unexpected error occurred. Details were written to the log file.\n\n" + e.Exception.Message,
                 "mixer - Error",
                 MessageBoxButton.OK,

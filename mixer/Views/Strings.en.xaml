@@ -1,0 +1,57 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- App -->
+    <sys:String x:Key="App.Title">mixer</sys:String>
+    <sys:String x:Key="App.Subtitle">audio routing</sys:String>
+    <sys:String x:Key="App.Settings">Settings</sys:String>
+
+    <!-- Status -->
+    <sys:String x:Key="Status.Connected">Connected to Wave Link</sys:String>
+    <sys:String x:Key="Status.Disconnected">Disconnected - retrying...</sys:String>
+    <sys:String x:Key="Status.NoWaveLink">Wave Link not running</sys:String>
+    <sys:String x:Key="Status.WaveLinkDisconnected">Wave Link disconnected - waiting...</sys:String>
+
+    <!-- Controls -->
+    <sys:String x:Key="Btn.MuteAll">Mute All</sys:String>
+    <sys:String x:Key="Btn.UnmuteAll">Unmute All</sys:String>
+    <sys:String x:Key="Btn.Mute">MUTE</sys:String>
+    <sys:String x:Key="Btn.MuteShort">M</sys:String>
+    <sys:String x:Key="Btn.AddToMix">+ Add to mix</sys:String>
+    <sys:String x:Key="Label.Source">SOURCE</sys:String>
+    <sys:String x:Key="Label.FocusedApp">Active: {0} → {1}</sys:String>
+    <sys:String x:Key="Label.FocusedAppNoChannel">Active: {0}</sys:String>
+    <sys:String x:Key="Label.Mic">Mic: {0} | Gain: {1:F1} dB | Mix: {2:F0}%</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="Settings.Title">Settings</sys:String>
+    <sys:String x:Key="Settings.Language">Language / اللغة</sys:String>
+    <sys:String x:Key="Settings.Theme">Theme / المظهر</sys:String>
+    <sys:String x:Key="Settings.Startup">Run on startup / تشغيل مع بدء النظام</sys:String>
+    <sys:String x:Key="Settings.StartupDesc">Automatically start mixer when you sign in</sys:String>
+    <sys:String x:Key="Settings.Close">Close / إغلاق</sys:String>
+    <sys:String x:Key="Settings.Dark">Dark</sys:String>
+    <sys:String x:Key="Settings.Light">Light</sys:String>
+
+    <!-- MIDI -->
+    <sys:String x:Key="Midi.Title">Edit MIDI Mapping - {0} → {1}</sys:String>
+    <sys:String x:Key="Midi.TitleMaster">Edit MIDI Mapping - {0} (Master)</sys:String>
+    <sys:String x:Key="Midi.TitleMix">Edit MIDI Mapping - {0} (Mute)</sys:String>
+    <sys:String x:Key="Midi.Device">MIDI Device:</sys:String>
+    <sys:String x:Key="Midi.Learn">Learn</sys:String>
+    <sys:String x:Key="Midi.Delete">Delete</sys:String>
+    <sys:String x:Key="Midi.ControlType">Control Type:</sys:String>
+    <sys:String x:Key="Midi.Action">Action:</sys:String>
+    <sys:String x:Key="Midi.CurrentMappings">Current Mappings:</sys:String>
+    <sys:String x:Key="Midi.Export">Export</sys:String>
+    <sys:String x:Key="Midi.Import">Import</sys:String>
+    <sys:String x:Key="Midi.Close">Close</sys:String>
+
+    <!-- Tooltips -->
+    <sys:String x:Key="Tooltip.MidiCell">Edit MIDI mapping for this cell</sys:String>
+    <sys:String x:Key="Tooltip.MidiMaster">MIDI Learn for master volume/mute</sys:String>
+    <sys:String x:Key="Tooltip.MidiMix">MIDI Learn for this mix mute</sys:String>
+    <sys:String x:Key="Tooltip.MuteSend">Mute this send</sys:String>
+
+</ResourceDictionary>

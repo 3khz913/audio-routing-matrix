@@ -1,0 +1,57 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- App -->
+    <sys:String x:Key="App.Title">مكسر</sys:String>
+    <sys:String x:Key="App.Subtitle">توجيه الصوت</sys:String>
+    <sys:String x:Key="App.Settings">الإعدادات</sys:String>
+
+    <!-- Status -->
+    <sys:String x:Key="Status.Connected">متصل بـ Wave Link</sys:String>
+    <sys:String x:Key="Status.Disconnected">منقطع - جاري إعادة المحاولة...</sys:String>
+    <sys:String x:Key="Status.NoWaveLink">Wave Link غير شغال</sys:String>
+    <sys:String x:Key="Status.WaveLinkDisconnected">Wave Link انقطع - انتظار...</sys:String>
+
+    <!-- Controls -->
+    <sys:String x:Key="Btn.MuteAll">كتم الكل</sys:String>
+    <sys:String x:Key="Btn.UnmuteAll">إلغاء كتم الكل</sys:String>
+    <sys:String x:Key="Btn.Mute">كتم</sys:String>
+    <sys:String x:Key="Btn.MuteShort">ك</sys:String>
+    <sys:String x:Key="Btn.AddToMix">+ إضافة للمكس</sys:String>
+    <sys:String x:Key="Label.Source">المصدر</sys:String>
+    <sys:String x:Key="Label.FocusedApp">النشط: {0} ← {1}</sys:String>
+    <sys:String x:Key="Label.FocusedAppNoChannel">النشط: {0}</sys:String>
+    <sys:String x:Key="Label.Mic">مايك: {0} | الصوت: {1:F1} dB | المزج: {2:F0}%</sys:String>
+
+    <!-- Settings -->
+    <sys:String x:Key="Settings.Title">الإعدادات</sys:String>
+    <sys:String x:Key="Settings.Language">Language / اللغة</sys:String>
+    <sys:String x:Key="Settings.Theme">Theme / المظهر</sys:String>
+    <sys:String x:Key="Settings.Startup">Run on startup / تشغيل مع بدء النظام</sys:String>
+    <sys:String x:Key="Settings.StartupDesc">تشغيل mixer تلقائياً عند تسجيل الدخول</sys:String>
+    <sys:String x:Key="Settings.Close">Close / إغلاق</sys:String>
+    <sys:String x:Key="Settings.Dark">غامق</sys:String>
+    <sys:String x:Key="Settings.Light">فاتح</sys:String>
+
+    <!-- MIDI -->
+    <sys:String x:Key="Midi.Title">تعديل MIDI - {0} ← {1}</sys:String>
+    <sys:String x:Key="Midi.TitleMaster">تعديل MIDI - {0} (رئيسي)</sys:String>
+    <sys:String x:Key="Midi.TitleMix">تعديل MIDI - {0} (كتم)</sys:String>
+    <sys:String x:Key="Midi.Device">جهاز MIDI:</sys:String>
+    <sys:String x:Key="Midi.Learn">تعلم</sys:String>
+    <sys:String x:Key="Midi.Delete">حذف</sys:String>
+    <sys:String x:Key="Midi.ControlType">نوع التحكم:</sys:String>
+    <sys:String x:Key="Midi.Action">الإجراء:</sys:String>
+    <sys:String x:Key="Midi.CurrentMappings">التعيينات الحالية:</sys:String>
+    <sys:String x:Key="Midi.Export">تصدير</sys:String>
+    <sys:String x:Key="Midi.Import">استيراد</sys:String>
+    <sys:String x:Key="Midi.Close">إغلاق</sys:String>
+
+    <!-- Tooltips -->
+    <sys:String x:Key="Tooltip.MidiCell">تعديل MIDI لهذه الخلية</sys:String>
+    <sys:String x:Key="Tooltip.MidiMaster">MIDI للصوت الرئيسي والكتم</sys:String>
+    <sys:String x:Key="Tooltip.MidiMix">MIDI لكتم هذا المكس</sys:String>
+    <sys:String x:Key="Tooltip.MuteSend">كتم هذا الإرسال</sys:String>
+
+</ResourceDictionary>

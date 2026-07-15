@@ -25,7 +25,7 @@ namespace mixer.Services
     public class WaveLinkService : IDisposable
     {
         private const string ServerUri = "ws://localhost:8765/";
-        private const int DebounceMilliseconds = 80;
+        private const int DebounceMilliseconds = 10;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -38,6 +38,9 @@ namespace mixer.Services
 
         public event Action<StateData>? StateReceived;
         public event Action<bool>? ConnectionChanged; // true = connected
+        public event Action<string>? StatusReceived;  // status messages from server
+        public event Action<LevelMeterData>? LevelMetersReceived;
+        public event Action<FocusedAppData>? FocusedAppReceived;
 
         public bool IsConnected => _socket?.State == WebSocketState.Open;
 
@@ -107,17 +110,60 @@ namespace mixer.Services
                 var msg = JsonSerializer.Deserialize<ServerMessage>(json, JsonOptions);
                 if (msg == null) return;
 
+                if (string.IsNullOrWhiteSpace(msg.Type))
+                {
+                    Logger.Warn("Received message with null/empty type.");
+                    return;
+                }
+
                 switch (msg.Type)
                 {
                     case "state":
-                        if (msg.Data != null)
+                        if (msg.Data == null)
                         {
-                            StateReceived?.Invoke(msg.Data);
+                            Logger.Warn("Received state message with null Data.");
+                            return;
                         }
+                        if (msg.Data.Inputs == null) msg.Data.Inputs = new();
+                        if (msg.Data.Mixes == null) msg.Data.Mixes = new();
+                        if (msg.Data.Cells == null) msg.Data.Cells = new();
+                        StateReceived?.Invoke(msg.Data);
                         break;
 
                     case "error":
                         Logger.Warn($"Server reported error: {json}");
+                        break;
+
+                    case "status":
+                        if (msg is { Data: not null })
+                        {
+                            // Status message: extract status string via raw JSON
+                            using var doc = JsonDocument.Parse(json);
+                            if (doc.RootElement.TryGetProperty("status", out var statusProp))
+                            {
+                                StatusReceived?.Invoke(statusProp.GetString() ?? "");
+                            }
+                        }
+                        break;
+
+                    case "levelMeters":
+                        try
+                        {
+                            var meters = JsonSerializer.Deserialize<LevelMeterData>(json, JsonOptions);
+                            if (meters != null)
+                                LevelMetersReceived?.Invoke(meters);
+                        }
+                        catch { }
+                        break;
+
+                    case "focusedApp":
+                        try
+                        {
+                            var app = JsonSerializer.Deserialize<FocusedAppData>(json, JsonOptions);
+                            if (app != null)
+                                FocusedAppReceived?.Invoke(app);
+                        }
+                        catch { }
                         break;
 
                     default:
@@ -188,6 +234,16 @@ namespace mixer.Services
                 type = "setMixMute",
                 mixId,
                 isMuted
+            });
+        }
+
+        public void AddChannelToMix(string inputId, string mixId)
+        {
+            _ = SendAsync(new
+            {
+                type = "addChannelToMix",
+                inputId,
+                mixId
             });
         }
 

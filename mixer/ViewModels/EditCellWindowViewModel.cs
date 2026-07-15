@@ -91,6 +91,8 @@ namespace mixer.ViewModels
         // أوامر
         public ICommand StartLearnCommand { get; }
         public ICommand DeleteMappingCommand { get; }
+        public RelayCommand ExportCommand { get; }
+        public RelayCommand ImportCommand { get; }
 
         // حدث لإغلاق النافذة
         public event Action? RequestClose;
@@ -104,6 +106,8 @@ namespace mixer.ViewModels
 
             StartLearnCommand = new RelayCommand(_ => ToggleLearn());
             DeleteMappingCommand = new RelayCommand(_ => DeleteSelectedMapping(), _ => SelectedMapping != null);
+            ExportCommand = new RelayCommand(_ => ExportMappings());
+            ImportCommand = new RelayCommand(_ => ImportMappings());
 
             LoadDevices();
             LoadMappings();
@@ -216,6 +220,52 @@ namespace mixer.ViewModels
         public void Cleanup()
         {
             _midiService.MessageReceived -= OnLearnMessageReceived;
+        }
+
+        private void ExportMappings()
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json",
+                    FileName = "midi_mappings.json",
+                    DefaultExt = ".json"
+                };
+                if (dlg.ShowDialog() == true)
+                {
+                    _storage.SaveToFile(dlg.FileName);
+                    LearnStatus = $"Mappings exported to {System.IO.Path.GetFileName(dlg.FileName)}.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to export MIDI mappings", ex);
+                LearnStatus = "Export failed.";
+            }
+        }
+
+        private void ImportMappings()
+        {
+            try
+            {
+                var dlg = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "JSON files (*.json)|*.json",
+                    DefaultExt = ".json"
+                };
+                if (dlg.ShowDialog() == true)
+                {
+                    _storage.LoadFromFile(dlg.FileName);
+                    LoadMappings();
+                    LearnStatus = $"Mappings imported. {Mappings.Count} mapping(s) loaded.";
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to import MIDI mappings", ex);
+                LearnStatus = "Import failed. Check log for details.";
+            }
         }
     }
 }

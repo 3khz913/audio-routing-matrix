@@ -4,60 +4,85 @@
         xmlns:vm="clr-namespace:mixer.ViewModels"
         Title="{Binding Title}" Height="500" Width="550"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize"
-        Background="#1A1B1E" Foreground="#F2F2F3"
-        FontFamily="Segoe UI"
+        Background="{DynamicResource BgWindow}" Foreground="{DynamicResource TextPrimary}"
+        FontFamily="Segoe UI Variable, Segoe UI"
         Closed="Window_Closed">
 
     <Window.Resources>
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Height" Value="28"/>
+        <Style x:Key="ActionButton" TargetType="Button">
+            <Setter Property="Height" Value="30"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="14,0"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="4">
+                        <Border x:Name="bg" Background="{DynamicResource AccentBrushStrong}" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bg" Background="#D93128" CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bg" Property="Opacity" Value="0.85"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
 
-        <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
-            <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
-        </Style>
-
-        <Style x:Key="LearnButtonStyle" TargetType="Button" BasedOn="{StaticResource ActionButtonStyle}">
+        <Style x:Key="LearnButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsLearning}" Value="True">
-                    <Setter Property="Background" Value="{StaticResource DangerBrush}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="#D93128" CornerRadius="6" Padding="14,0">
+                                    <TextBlock Text="Stop" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="White"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
     </Window.Resources>
 
-    <Grid Margin="15">
+    <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- 0: Title -->
             <RowDefinition Height="Auto"/>
-            <!-- 1: Device & Learn -->
             <RowDefinition Height="Auto"/>
-            <!-- 2: Control Type & Action -->
             <RowDefinition Height="*"/>
-            <!-- 3: Mappings List -->
             <RowDefinition Height="Auto"/>
-            <!-- 4: Close Button -->
         </Grid.RowDefinitions>
 
-        <!-- 0: Title -->
-        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="16" FontWeight="Bold" Margin="0,0,0,12"/>
+        <!-- Title -->
+        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="18" FontWeight="Bold" Margin="0,0,0,14"
+                   Foreground="{DynamicResource AccentBrush}"/>
 
-        <!-- 1: Device & Learn -->
-        <Grid Grid.Row="1" Margin="0,0,0,10">
+        <!-- Device & Learn -->
+        <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -67,25 +92,26 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="MIDI Device:" Foreground="{StaticResource TextSecondary}" FontSize="11" Margin="0,0,0,4"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="MIDI Device:"
+                       Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,5"/>
             <ComboBox Grid.Row="1" Grid.Column="0" ItemsSource="{Binding AvailableDevices}"
                       SelectedItem="{Binding SelectedDevice}"
-                      Background="#404040" Foreground="White"
-                      BorderBrush="#555555" Height="28" Margin="0,0,10,0"/>
+                      Height="30" Margin="0,0,10,0"/>
 
-            <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+            <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="1"
+                        Orientation="Horizontal" VerticalAlignment="Bottom">
                 <Button Content="Learn" Command="{Binding StartLearnCommand}"
-                        Style="{StaticResource LearnButtonStyle}" Width="70" Margin="0,0,5,0"/>
+                        Style="{DynamicResource LearnButton}" Width="75" Margin="0,0,6,0"/>
                 <Button Content="Delete" Command="{Binding DeleteMappingCommand}"
-                        Style="{StaticResource DangerButtonStyle}" Width="70"/>
+                        Style="{DynamicResource DangerButton}" Width="75"/>
             </StackPanel>
         </Grid>
 
-        <!-- 2: Control Type & Action -->
-        <Grid Grid.Row="2" Margin="0,0,0,10">
+        <!-- Control Type & Action -->
+        <Grid Grid.Row="2" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="12"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
@@ -93,57 +119,63 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Control Type:" Foreground="{StaticResource TextSecondary}" FontSize="11" Margin="0,0,0,4"/>
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Control Type:"
+                       Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,5"/>
             <ComboBox Grid.Row="1" Grid.Column="0"
                       ItemsSource="{Binding ControlTypes}"
-                      SelectedItem="{Binding SelectedControlType}"
-                      Background="#404040" Foreground="White"
-                      BorderBrush="#555555" Height="28"/>
+                      SelectedItem="{Binding SelectedControlType}" Height="30"/>
 
-            <TextBlock Grid.Row="0" Grid.Column="2" Text="Action:" Foreground="{StaticResource TextSecondary}" FontSize="11" Margin="0,0,0,4"/>
+            <TextBlock Grid.Row="0" Grid.Column="2" Text="Action:"
+                       Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,5"/>
             <ComboBox Grid.Row="1" Grid.Column="2"
                       ItemsSource="{Binding Actions}"
-                      SelectedItem="{Binding SelectedAction}"
-                      Background="#404040" Foreground="White"
-                      BorderBrush="#555555" Height="28"/>
+                      SelectedItem="{Binding SelectedAction}" Height="30"/>
         </Grid>
 
-        <!-- 3: Mappings List -->
-        <Border Grid.Row="3" Background="#232428" CornerRadius="6" Padding="10" Margin="0,0,0,10">
+        <!-- Mappings List -->
+        <Border Grid.Row="3" Background="{DynamicResource BgPanel}" CornerRadius="8"
+                Padding="12" Margin="0,0,0,12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="Current Mappings:" Foreground="{StaticResource TextSecondary}" FontSize="11" Margin="0,0,0,6"/>
+                <TextBlock Grid.Row="0" Text="Current Mappings:"
+                           Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,8"/>
 
                 <ListBox Grid.Row="1" ItemsSource="{Binding Mappings}"
                          SelectedItem="{Binding SelectedMapping, Mode=TwoWay}"
                          Background="Transparent" BorderThickness="0"
-                         Foreground="White">
+                         Foreground="{DynamicResource TextPrimary}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayText}" Margin="4,2"/>
+                            <TextBlock Text="{Binding DisplayText}" Margin="4,3"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
             </Grid>
         </Border>
 
-        <!-- 4: Learn Status & Close Button -->
+        <!-- Footer -->
         <Grid Grid.Row="4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <TextBlock Grid.Column="0" Text="{Binding LearnStatus}"
-                       Foreground="{StaticResource AccentBrush}" FontSize="12"
+                       Foreground="{DynamicResource AccentBrush}" FontSize="11"
                        VerticalAlignment="Center" TextWrapping="Wrap"/>
 
-            <Button Grid.Column="1" Content="Close" Click="OnCloseClicked"
-                    Style="{StaticResource ActionButtonStyle}" Width="80"/>
+            <Button Grid.Column="1" Content="Export" Command="{Binding ExportCommand}"
+                    Style="{DynamicResource ActionButton}" Width="65" Margin="0,0,6,0"/>
+            <Button Grid.Column="2" Content="Import" Command="{Binding ImportCommand}"
+                    Style="{DynamicResource ActionButton}" Width="65" Margin="0,0,6,0"/>
+            <Button Grid.Column="3" Content="Close" Click="OnCloseClicked"
+                    Style="{DynamicResource ActionButton}" Width="65"/>
         </Grid>
     </Grid>
 </Window>
