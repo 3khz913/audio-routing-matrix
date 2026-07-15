@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #2B2B2B;
+    color: #E0E0E0;
+    padding: 16px;
+    font-size: 13px;
+  }
+  h3 { font-size: 14px; margin-bottom: 14px; color: #60CDFF; }
+  label { display: block; font-size: 11px; color: #999; margin-bottom: 4px; margin-top: 12px; }
+  select {
+    width: 100%;
+    padding: 8px;
+    background: #3A3A3A;
+    color: #E0E0E0;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .status { margin-top: 16px; font-size: 10px; }
+  .status.ok { color: #6CCB5F; }
+  .status.err { color: #E7483F; }
+</style>
+</head>
+<body>
+
+<h3>Channel Level</h3>
+
+<label>Channel</label>
+<select id="channel">
+  <option value="">-- Select channel --</option>
+</select>
+
+<label>Mix</label>
+<select id="mix">
+  <option value="">All mixes</option>
+</select>
+
+<div style="font-size:10px;color:#777;margin-top:4px;">Choose "All mixes" to control master volume</div>
+
+<div id="status" class="status">Connecting...</div>
+
+<script src="channel-level.js"></script>
+</body>
+</html>
