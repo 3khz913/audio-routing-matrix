@@ -13,6 +13,7 @@ namespace mixer.ViewModels
         private readonly WaveLinkService _waveLinkService;
         private readonly MidiService _midiService;
         private readonly MidiMappingStorage _midiMappingStorage;
+        private readonly KeyboardMappingStorage _keyboardMappingStorage;
         private bool _initialized;
 
         public ObservableCollection<MixViewModel> Mixes { get; } = new();
@@ -50,11 +51,12 @@ namespace mixer.ViewModels
             set => SetField(ref _micInfoText, value);
         }
 
-        public MainViewModel(WaveLinkService waveLinkService, MidiService midiService, MidiMappingStorage midiMappingStorage)
+        public MainViewModel(WaveLinkService waveLinkService, MidiService midiService, MidiMappingStorage midiMappingStorage, KeyboardMappingStorage keyboardMappingStorage)
         {
             _waveLinkService = waveLinkService;
             _midiService = midiService;
             _midiMappingStorage = midiMappingStorage;
+            _keyboardMappingStorage = keyboardMappingStorage;
 
             MuteAllCommand = new RelayCommand(_ => MuteAll());
             UnmuteAllCommand = new RelayCommand(_ => UnmuteAll());
@@ -270,6 +272,7 @@ namespace mixer.ViewModels
                 mixVm.EditRequested += (_, _) =>
                     RunOnUiThread(() => OpenEditWindowForMix(mixVm));
                 mixVm.HasMidiMapping = _midiMappingStorage.HasMapping(mixVm.MappingKey);
+                mixVm.HasKeyboardBinding = _keyboardMappingStorage.HasBinding(mixVm.MappingKey);
                 Mixes.Add(mixVm);
             }
 
@@ -280,6 +283,7 @@ namespace mixer.ViewModels
                 sourceVm.UpdateMasterVolumeFromService(inputDto.Volume);
                 sourceVm.UpdateMuteFromService(inputDto.IsMuted);
                 sourceVm.HasMidiMapping = _midiMappingStorage.HasMapping(sourceVm.MappingKey);
+                sourceVm.HasKeyboardBinding = _keyboardMappingStorage.HasBinding(sourceVm.MappingKey);
 
                 sourceVm.MasterVolumeChangedByUser += (_, volume) =>
                     _waveLinkService.SetInputVolumeDebounced(sourceVm.Id, volume);
@@ -300,6 +304,7 @@ namespace mixer.ViewModels
                     }
 
                     cellVm.HasMidiMapping = _midiMappingStorage.HasMapping(cellVm.MappingKey);
+                    cellVm.HasKeyboardBinding = _keyboardMappingStorage.HasBinding(cellVm.MappingKey);
 
                     cellVm.VolumeChangedByUser += (_, volume) =>
                         _waveLinkService.SetInputMixVolumeDebounced(cellVm.InputId, cellVm.MixId, volume);
@@ -321,28 +326,38 @@ namespace mixer.ViewModels
         private void OpenEditWindow(CellViewModel cell)
         {
             var title = Loc.Get("Midi.Title", cell.InputId, cell.MixId);
-            var editVM = new EditCellWindowViewModel(_midiService, _midiMappingStorage, cell.MappingKey, title);
+            var editVM = new EditCellWindowViewModel(_midiService, _midiMappingStorage,
+                App.KeyboardDeviceService, App.KeyboardMappingStorage, App.GlobalHotkeyService,
+                cell.MappingKey, title);
             var window = new EditCellWindow(editVM) { Owner = System.Windows.Application.Current.MainWindow };
             window.ShowDialog();
             cell.HasMidiMapping = _midiMappingStorage.HasMapping(cell.MappingKey);
+            cell.HasKeyboardBinding = _keyboardMappingStorage.HasBinding(cell.MappingKey);
+            App.GlobalHotkeyService.SetBindings(_keyboardMappingStorage.GetAllMappings());
         }
 
         private void OpenEditWindowForSource(SourceViewModel source)
         {
             var title = Loc.Get("Midi.TitleMaster", source.Name);
-            var editVM = new EditCellWindowViewModel(_midiService, _midiMappingStorage, source.MappingKey, title);
+            var editVM = new EditCellWindowViewModel(_midiService, _midiMappingStorage,
+                App.KeyboardDeviceService, App.KeyboardMappingStorage, App.GlobalHotkeyService,
+                source.MappingKey, title);
             var window = new EditCellWindow(editVM) { Owner = System.Windows.Application.Current.MainWindow };
             window.ShowDialog();
             source.HasMidiMapping = _midiMappingStorage.HasMapping(source.MappingKey);
+            source.HasKeyboardBinding = _keyboardMappingStorage.HasBinding(source.MappingKey);
         }
 
         private void OpenEditWindowForMix(MixViewModel mix)
         {
             var title = Loc.Get("Midi.TitleMix", mix.Name);
-            var editVM = new EditCellWindowViewModel(_midiService, _midiMappingStorage, mix.MappingKey, title);
+            var editVM = new EditCellWindowViewModel(_midiService, _midiMappingStorage,
+                App.KeyboardDeviceService, App.KeyboardMappingStorage, App.GlobalHotkeyService,
+                mix.MappingKey, title);
             var window = new EditCellWindow(editVM) { Owner = System.Windows.Application.Current.MainWindow };
             window.ShowDialog();
             mix.HasMidiMapping = _midiMappingStorage.HasMapping(mix.MappingKey);
+            mix.HasKeyboardBinding = _keyboardMappingStorage.HasBinding(mix.MappingKey);
         }
 
         private void OnMidiMessageReceived(object? sender, MidiValueEventArgs e)
@@ -363,6 +378,64 @@ namespace mixer.ViewModels
             {
                 Logger.Error("Error dispatching MIDI message to mappings", ex);
             }
+        }
+
+        public void HandleKeyAction(string key, string action)
+        {
+            RunOnUiThread(() =>
+            {
+                var parts = key.Split('|');
+                if (parts.Length != 2) return;
+                var sourceId = parts[0];
+                var target = parts[1];
+
+                // Mix-level keys start with "mix|"
+                if (key.StartsWith("mix|"))
+                {
+                    var mixId = key.Substring(4);
+                    var mixVm = Mixes.FirstOrDefault(m => m.Id == mixId);
+                    if (mixVm == null) return;
+                    if (action == "mute")
+                        mixVm.IsMuted = !mixVm.IsMuted;
+                    return;
+                }
+
+                var sourceVm = Sources.FirstOrDefault(s => s.Id == sourceId);
+                if (sourceVm == null) return;
+
+                if (target == "master")
+                {
+                    switch (action)
+                    {
+                        case "volup":
+                            sourceVm.MasterVolume = Math.Min(100, sourceVm.MasterVolume + 10);
+                            break;
+                        case "voldown":
+                            sourceVm.MasterVolume = Math.Max(0, sourceVm.MasterVolume - 10);
+                            break;
+                        case "mute":
+                            sourceVm.IsMuted = !sourceVm.IsMuted;
+                            break;
+                    }
+                }
+                else
+                {
+                    var cellVm = sourceVm.GetCell(target);
+                    if (cellVm == null) return;
+                    switch (action)
+                    {
+                        case "volup":
+                            cellVm.Volume = Math.Min(100, cellVm.Volume + 10);
+                            break;
+                        case "voldown":
+                            cellVm.Volume = Math.Max(0, cellVm.Volume - 10);
+                            break;
+                        case "mute":
+                            cellVm.IsMuted = !cellVm.IsMuted;
+                            break;
+                    }
+                }
+            });
         }
 
         private void HandleMidiAction(string key, MidiMapping mapping, int rawValue)

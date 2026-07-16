@@ -79,6 +79,13 @@ namespace mixer.ViewModels
         }
         private bool _hasMidiMapping;
 
+        public bool HasKeyboardBinding
+        {
+            get => _hasKeyboardBinding;
+            set => SetField(ref _hasKeyboardBinding, value);
+        }
+        private bool _hasKeyboardBinding;
+
         public SourceViewModel(string id, string name)
         {
             Id = id;

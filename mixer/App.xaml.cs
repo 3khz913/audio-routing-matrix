@@ -18,6 +18,9 @@ namespace mixer
         public static MidiService MidiService { get; private set; } = null!;
         public static MidiMappingStorage MidiMappingStorage { get; private set; } = null!;
         public static SettingsStorage SettingsStorage { get; private set; } = null!;
+        public static GlobalHotkeyService GlobalHotkeyService { get; private set; } = null!;
+        public static KeyboardDeviceService KeyboardDeviceService { get; private set; } = null!;
+        public static KeyboardMappingStorage KeyboardMappingStorage { get; private set; } = null!;
 
         private Process? _serverProcess;
         private Forms.NotifyIcon? _notifyIcon;
@@ -46,6 +49,11 @@ namespace mixer
             MidiService = new MidiService();
             MidiMappingStorage = new MidiMappingStorage();
             SettingsStorage = new SettingsStorage();
+            KeyboardMappingStorage = new KeyboardMappingStorage();
+            KeyboardDeviceService = new KeyboardDeviceService();
+            GlobalHotkeyService = new GlobalHotkeyService();
+            GlobalHotkeyService.SetBindings(KeyboardMappingStorage.GetAllMappings());
+            GlobalHotkeyService.Start();
 
             // تطبيق الثيم المحفوظ
             ApplyTheme(SettingsStorage.Settings.Theme);
@@ -55,7 +63,8 @@ namespace mixer
             _ = WaveLinkService.ConnectAsync();
 
             // إنشاء ViewModel الرئيسي
-            var mainVM = new MainViewModel(WaveLinkService, MidiService, MidiMappingStorage);
+            var mainVM = new MainViewModel(WaveLinkService, MidiService, MidiMappingStorage, KeyboardMappingStorage);
+            GlobalHotkeyService.KeyActionTriggered += (key, action) => mainVM.HandleKeyAction(key, action);
 
             // إنشاء النافذة الرئيسية وعرضها
             _mainWindow = new MainWindow { DataContext = mainVM };
@@ -291,6 +300,7 @@ namespace mixer
         protected override void OnExit(ExitEventArgs e)
         {
             StopServer();
+            GlobalHotkeyService?.Dispose();
             _notifyIcon?.Dispose();
             WaveLinkService?.Dispose();
             MidiService?.Dispose();
