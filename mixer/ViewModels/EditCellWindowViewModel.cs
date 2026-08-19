@@ -98,6 +98,16 @@ namespace mixer.ViewModels
             set => SetField(ref _selectedKeyboard, value);
         }
 
+        private KeyboardDeviceInfo? _confirmedKeyboard;
+        public KeyboardDeviceInfo? ConfirmedKeyboard
+        {
+            get => _confirmedKeyboard;
+            set => SetField(ref _confirmedKeyboard, value);
+        }
+
+        public string ConfirmedKeyboardText =>
+            ConfirmedKeyboard != null ? $"Confirmed: {ConfirmedKeyboard.DisplayName}" : "No keyboard confirmed";
+
         private string _volUpText = "Not set";
         public string VolUpText
         {
@@ -147,6 +157,7 @@ namespace mixer.ViewModels
         public ICommand RenameKbCommand { get; }
         public ICommand SaveRenameCommand { get; }
         public ICommand CancelRenameCommand { get; }
+        public ICommand ConfirmKeyboardCommand { get; }
 
         private string? _kbSlot;
 
@@ -177,6 +188,7 @@ namespace mixer.ViewModels
             RenameKbCommand = new RelayCommand(_ => StartRename(), _ => SelectedKeyboard != null);
             SaveRenameCommand = new RelayCommand(_ => SaveRename(), _ => SelectedKeyboard != null);
             CancelRenameCommand = new RelayCommand(_ => CancelRename());
+            ConfirmKeyboardCommand = new RelayCommand(_ => ConfirmKeyboard(), _ => SelectedKeyboard != null);
 
             _hotkeyService.KeyLearned += OnKeyLearned;
             LoadDevices();
@@ -318,17 +330,31 @@ namespace mixer.ViewModels
             if (binding.Mute != null) MuteText = binding.Mute.DisplayName;
 
             var savedKb = AvailableKeyboards.FirstOrDefault(k => k.Id == binding.KeyboardDeviceId);
-            if (savedKb != null) _selectedKeyboard = savedKb;
+            if (savedKb != null)
+            {
+                _confirmedKeyboard = savedKb;
+                _selectedKeyboard = savedKb; // reflect in dropdown
+                OnPropertyChanged(nameof(ConfirmedKeyboard));
+                OnPropertyChanged(nameof(ConfirmedKeyboardText));
+            }
+        }
+
+        private void ConfirmKeyboard()
+        {
+            if (SelectedKeyboard == null) return;
+            ConfirmedKeyboard = SelectedKeyboard;
+            OnPropertyChanged(nameof(ConfirmedKeyboardText));
+            LearnStatus = $"Keyboard confirmed: {ConfirmedKeyboard.DisplayName}";
         }
 
         private void StartKbLearn(string slot)
         {
-            if (_selectedKeyboard == null) { LearnStatus = "Select a keyboard first."; return; }
+            if (ConfirmedKeyboard == null) { LearnStatus = "Select and confirm a keyboard first."; return; }
             StopKbLearn();
             _kbSlot = slot;
             _hotkeyService.IsLearning = true;
             IsLearningKb = true;
-            LearnStatus = $"Press a key for {slot}...";
+            LearnStatus = $"Press a key on '{ConfirmedKeyboard.DisplayName}' for {slot}...";
         }
 
         private void StopKbLearn()
@@ -344,21 +370,21 @@ namespace mixer.ViewModels
 
             var binding = _kbStorage.GetBinding(_mappingKey) ?? new KeyboardBinding();
 
-            if (_selectedKeyboard != null)
+            if (ConfirmedKeyboard != null)
             {
-                binding.KeyboardDeviceId = _selectedKeyboard.Id;
-                binding.KeyboardDeviceName = _selectedKeyboard.Name;
+                binding.KeyboardDeviceId = ConfirmedKeyboard.Id;
+                binding.KeyboardDeviceName = ConfirmedKeyboard.Name;
             }
             binding.DevicePath = devicePath;
 
-            // Warn if the pressed keyboard doesn't match the one selected in the dropdown
-            if (_selectedKeyboard != null && !string.IsNullOrEmpty(devicePath))
+            // Warn if the pressed keyboard doesn't match the confirmed one
+            if (ConfirmedKeyboard != null && !string.IsNullOrEmpty(devicePath))
             {
                 var normalized = string.Concat(devicePath.Where(char.IsLetterOrDigit)).ToUpperInvariant();
-                var expected = string.Concat(_selectedKeyboard.Id.Where(char.IsLetterOrDigit)).ToUpperInvariant();
+                var expected = string.Concat(ConfirmedKeyboard.Id.Where(char.IsLetterOrDigit)).ToUpperInvariant();
                 if (!normalized.Contains(expected) && !expected.Contains(normalized))
                 {
-                    LearnStatus = $"Warning: key pressed on a different keyboard than selected ({_selectedKeyboard.DisplayName}). Press the key on the selected keyboard.";
+                    LearnStatus = $"Warning: key pressed on a different keyboard than confirmed ({ConfirmedKeyboard.DisplayName}). Press the key on the confirmed keyboard.";
                 }
             }
 

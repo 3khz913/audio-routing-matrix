@@ -160,15 +160,19 @@
 
             <TextBlock Text="Keyboard:"
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,5"/>
-            <Grid Margin="0,0,0,8">
+            <Grid Margin="0,0,0,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <ComboBox Grid.Column="0" ItemsSource="{Binding AvailableKeyboards}"
                           SelectedItem="{Binding SelectedKeyboard}" DisplayMemberPath="DisplayName"
                           Height="30" Margin="0,0,6,0"/>
-                <Button Grid.Column="1" Content="Rename" Command="{Binding RenameKbCommand}"
+                <Button Grid.Column="1" Content="Confirm" Command="{Binding ConfirmKeyboardCommand}"
+                        Height="26" Width="70" FontSize="10" Margin="0,0,6,0" Cursor="Hand"
+                        Foreground="White" Background="{DynamicResource AccentBrushStrong}" BorderThickness="0"/>
+                <Button Grid.Column="2" Content="Rename" Command="{Binding RenameKbCommand}"
                         Height="26" Width="70" FontSize="10" Foreground="{DynamicResource TextSecondary}" Cursor="Hand">
                     <Button.Template>
                         <ControlTemplate TargetType="Button">
@@ -185,6 +189,10 @@
                     </Button.Template>
                 </Button>
             </Grid>
+
+            <!-- Confirmed keyboard indicator -->
+            <TextBlock Text="{Binding ConfirmedKeyboardText}" FontSize="11"
+                       Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
 
             <!-- Rename input row (visible while renaming) -->
             <Grid Margin="0,0,0,8" Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibilityConverter}}">
