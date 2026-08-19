@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 using mixer.Models;
@@ -13,7 +15,7 @@ namespace mixer.Services
         private readonly Dictionary<string, KeyboardBinding> _bindings = new();
 
         public event Action<string, string>? KeyActionTriggered; // (mappingKey, action: volup/voldown/mute)
-        public event Action<KeyInfo>? KeyLearned;
+        public event Action<KeyInfo, string>? KeyLearned; // (key, devicePath)
         public bool IsLearning { get; set; }
 
         public void Start()
@@ -81,7 +83,7 @@ namespace mixer.Services
 
             var vk = (int)kb.VKey;
             var sc = (int)kb.MakeCode;
-            var device = header.hDevice;
+            var devicePath = GetDeviceName(header.hDevice);
 
             if (IsLearning)
             {
@@ -90,13 +92,15 @@ namespace mixer.Services
                     VkCode = vk,
                     ScanCode = sc,
                     DisplayName = VkToName(vk)
-                });
+                }, devicePath);
                 return;
             }
 
             foreach (var (key, binding) in _bindings)
             {
-                if (device != IntPtr.Zero && device != IntPtr.Zero) { /* device filtering done below */ }
+                // Filter by physical keyboard — only respond to the device that was used when learning
+                if (!DeviceMatches(binding, devicePath))
+                    continue;
 
                 if (binding.VolUp != null && (binding.VolUp.VkCode == vk || binding.VolUp.ScanCode == sc))
                     KeyActionTriggered?.Invoke(key, "volup");
@@ -105,6 +109,66 @@ namespace mixer.Services
                 else if (binding.Mute != null && (binding.Mute.VkCode == vk || binding.Mute.ScanCode == sc))
                     KeyActionTriggered?.Invoke(key, "mute");
             }
+        }
+
+        /// <summary>
+        /// Returns the stable raw-input device path for a device handle,
+        /// e.g. \?\HID#VID_3151&PID_5029&MI_01&COL03#9&E9BC87E&0&0002
+        /// </summary>
+        private static string GetDeviceName(IntPtr hDevice)
+        {
+            if (hDevice == IntPtr.Zero) return "";
+            try
+            {
+                uint size = 0;
+                GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, IntPtr.Zero, ref size);
+                if (size == 0) return "";
+                var sb = new StringBuilder((int)size);
+                GetRawInputDeviceInfo(hDevice, RIDI_DEVICENAME, sb, ref size);
+                return sb.ToString();
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        /// <summary>
+        /// Compares the runtime device path against the binding's stored device.
+        /// Uses the exact RIDI device path captured at learn time; falls back to a
+        /// normalized WMI DeviceID comparison for legacy bindings.
+        /// </summary>
+        private static bool DeviceMatches(KeyboardBinding binding, string runtimeDevicePath)
+        {
+            if (string.IsNullOrEmpty(runtimeDevicePath)) return false;
+
+            // Primary: exact device path captured during Learn
+            if (!string.IsNullOrEmpty(binding.DevicePath))
+                return string.Equals(
+                    NormalizeDevicePath(binding.DevicePath),
+                    NormalizeDevicePath(runtimeDevicePath),
+                    StringComparison.OrdinalIgnoreCase);
+
+            // Fallback: normalized WMI DeviceID vs normalized runtime path
+            if (!string.IsNullOrEmpty(binding.KeyboardDeviceId))
+                return string.Equals(
+                    NormalizeDevicePath(binding.KeyboardDeviceId),
+                    NormalizeDevicePath(runtimeDevicePath),
+                    StringComparison.OrdinalIgnoreCase);
+
+            // No device info stored — cannot filter, treat as match (legacy behavior)
+            return true;
+        }
+
+        /// <summary>
+        /// Normalizes a device path / WMI ID so both formats are comparable:
+        /// strips separators (\ # / ? : .), removes non-alphanumerics, uppercase.
+        /// </summary>
+        private static string NormalizeDevicePath(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return "";
+            var chars = value.Where(c => char.IsLetterOrDigit(c)).Select(char.ToUpperInvariant);
+            return new string(chars.ToArray());
         }
 
         public static string VkToName(int vk) => vk switch
@@ -134,6 +198,7 @@ namespace mixer.Services
         private const int RID_INPUT = 0x10000003;
         private const int RIM_TYPEKEYBOARD = 1;
         private const int RI_KEY_BREAK = 1;
+        private const uint RIDI_DEVICENAME = 0x20000007;
 
         [Flags] private enum WS_EX : uint { TOOLWINDOW = 0x80, TRANSPARENT = 0x20, NOACTIVATE = 0x08000000 }
 
@@ -174,5 +239,11 @@ namespace mixer.Services
 
         [DllImport("user32.dll")]
         private static extern uint GetRawInputData(IntPtr h, uint cmd, byte[] p, ref uint sz, uint hdr);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint GetRawInputDeviceInfo(IntPtr hDevice, uint uiCommand, IntPtr pData, ref uint pcbSize);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern uint GetRawInputDeviceInfo(IntPtr hDevice, uint uiCommand, StringBuilder pData, ref uint pcbSize);
     }
 }

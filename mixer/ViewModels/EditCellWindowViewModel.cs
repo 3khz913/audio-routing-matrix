@@ -338,7 +338,7 @@ namespace mixer.ViewModels
             IsLearningKb = false;
         }
 
-        private void OnKeyLearned(KeyInfo key)
+        private void OnKeyLearned(KeyInfo key, string devicePath)
         {
             if (_kbSlot == null) return;
 
@@ -348,6 +348,18 @@ namespace mixer.ViewModels
             {
                 binding.KeyboardDeviceId = _selectedKeyboard.Id;
                 binding.KeyboardDeviceName = _selectedKeyboard.Name;
+            }
+            binding.DevicePath = devicePath;
+
+            // Warn if the pressed keyboard doesn't match the one selected in the dropdown
+            if (_selectedKeyboard != null && !string.IsNullOrEmpty(devicePath))
+            {
+                var normalized = string.Concat(devicePath.Where(char.IsLetterOrDigit)).ToUpperInvariant();
+                var expected = string.Concat(_selectedKeyboard.Id.Where(char.IsLetterOrDigit)).ToUpperInvariant();
+                if (!normalized.Contains(expected) && !expected.Contains(normalized))
+                {
+                    LearnStatus = $"Warning: key pressed on a different keyboard than selected ({_selectedKeyboard.DisplayName}). Press the key on the selected keyboard.";
+                }
             }
 
             switch (_kbSlot)
