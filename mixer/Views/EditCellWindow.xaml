@@ -160,8 +160,53 @@
 
             <TextBlock Text="Keyboard:"
                        Foreground="{DynamicResource TextSecondary}" FontSize="11" Margin="0,0,0,5"/>
-            <ComboBox ItemsSource="{Binding AvailableKeyboards}" SelectedItem="{Binding SelectedKeyboard}"
-                      DisplayMemberPath="Name" Height="30" Margin="0,0,0,8"/>
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0" ItemsSource="{Binding AvailableKeyboards}"
+                          SelectedItem="{Binding SelectedKeyboard}" DisplayMemberPath="DisplayName"
+                          Height="30" Margin="0,0,6,0"/>
+                <Button Grid.Column="1" Content="Rename" Command="{Binding RenameKbCommand}"
+                        Height="26" Width="70" FontSize="10" Foreground="{DynamicResource TextSecondary}" Cursor="Hand">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="bg" Background="{DynamicResource BgPanel}" CornerRadius="5" Padding="8,0">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bg" Property="Background" Value="{DynamicResource AccentBrushMuted}"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </Grid>
+
+            <!-- Rename input row (visible while renaming) -->
+            <Grid Margin="0,0,0,8" Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0" Text="{Binding RenameText, UpdateSourceTrigger=PropertyChanged}"
+                         Height="28" VerticalContentAlignment="Center" Padding="6,0"
+                         Background="{DynamicResource BgPanel}" Foreground="{DynamicResource TextPrimary}"
+                         BorderBrush="{DynamicResource BorderSubtle}" BorderThickness="1"
+                         Margin="0,0,6,0" FontSize="11"/>
+                <Button Grid.Column="1" Content="Save" Command="{Binding SaveRenameCommand}"
+                        Height="26" Width="55" FontSize="10" Margin="0,0,6,0" Cursor="Hand"
+                        Foreground="White" Background="{DynamicResource AccentBrushStrong}"
+                        BorderThickness="0"/>
+                <Button Grid.Column="2" Content="Cancel" Command="{Binding CancelRenameCommand}"
+                        Height="26" Width="55" FontSize="10" Cursor="Hand"
+                        Foreground="{DynamicResource TextSecondary}" Background="{DynamicResource BgPanel}"
+                        BorderThickness="0"/>
+            </Grid>
 
             <!-- Vol Up -->
             <Grid Margin="0,3">

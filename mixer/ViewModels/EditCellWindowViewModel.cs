@@ -126,10 +126,27 @@ namespace mixer.ViewModels
             set => SetField(ref _isLearningKb, value);
         }
 
+        private bool _isRenaming;
+        public bool IsRenaming
+        {
+            get => _isRenaming;
+            set => SetField(ref _isRenaming, value);
+        }
+
+        private string _renameText = "";
+        public string RenameText
+        {
+            get => _renameText;
+            set => SetField(ref _renameText, value);
+        }
+
         public ICommand LearnVolUpCommand { get; }
         public ICommand LearnVolDownCommand { get; }
         public ICommand LearnMuteCommand { get; }
         public ICommand ClearKbCommand { get; }
+        public ICommand RenameKbCommand { get; }
+        public ICommand SaveRenameCommand { get; }
+        public ICommand CancelRenameCommand { get; }
 
         private string? _kbSlot;
 
@@ -157,6 +174,9 @@ namespace mixer.ViewModels
             LearnVolDownCommand = new RelayCommand(_ => StartKbLearn("voldown"));
             LearnMuteCommand = new RelayCommand(_ => StartKbLearn("mute"));
             ClearKbCommand = new RelayCommand(_ => ClearKeyboardBinding());
+            RenameKbCommand = new RelayCommand(_ => StartRename(), _ => SelectedKeyboard != null);
+            SaveRenameCommand = new RelayCommand(_ => SaveRename(), _ => SelectedKeyboard != null);
+            CancelRenameCommand = new RelayCommand(_ => CancelRename());
 
             _hotkeyService.KeyLearned += OnKeyLearned;
             LoadDevices();
@@ -253,7 +273,39 @@ namespace mixer.ViewModels
         {
             AvailableKeyboards.Clear();
             foreach (var kb in _kbService.GetKeyboards())
+            {
+                kb.UserAlias = _kbStorage.GetAlias(kb.Id) ?? "";
                 AvailableKeyboards.Add(kb);
+            }
+        }
+
+        private void StartRename()
+        {
+            if (SelectedKeyboard == null) return;
+            RenameText = SelectedKeyboard.UserAlias ?? SelectedKeyboard.Name;
+            IsRenaming = true;
+        }
+
+        private void SaveRename()
+        {
+            if (SelectedKeyboard == null) return;
+            SelectedKeyboard.UserAlias = RenameText.Trim();
+            _kbStorage.SetAlias(SelectedKeyboard.Id, SelectedKeyboard.UserAlias);
+            IsRenaming = false;
+            // Refresh the collection so the ComboBox re-renders DisplayName
+            var idx = AvailableKeyboards.IndexOf(SelectedKeyboard);
+            if (idx >= 0)
+            {
+                AvailableKeyboards.RemoveAt(idx);
+                AvailableKeyboards.Insert(idx, SelectedKeyboard);
+            }
+            LearnStatus = $"Keyboard renamed to '{SelectedKeyboard.DisplayName}'.";
+        }
+
+        private void CancelRename()
+        {
+            IsRenaming = false;
+            RenameText = "";
         }
 
         private void LoadKeyboardBinding()

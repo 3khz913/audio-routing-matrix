@@ -11,6 +11,7 @@ namespace mixer.Services
         private static readonly string _directory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "mixer");
         private static readonly string _filePath = Path.Combine(_directory, "keyboard_mappings.json");
+        private static readonly string _aliasesPath = Path.Combine(_directory, "keyboard_aliases.json");
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -19,8 +20,9 @@ namespace mixer.Services
         };
 
         private Dictionary<string, KeyboardBinding> _mappings = new();
+        private Dictionary<string, string> _aliases = new();
 
-        public KeyboardMappingStorage() => Load();
+        public KeyboardMappingStorage() { Load(); LoadAliases(); }
 
         public Dictionary<string, KeyboardBinding> GetAllMappings() => _mappings;
 
@@ -44,6 +46,61 @@ namespace mixer.Services
         {
             _mappings.Remove(key);
             Save();
+        }
+
+        // ─── Keyboard aliases (user-defined names) ───
+
+        public string? GetAlias(string keyboardId)
+        {
+            return _aliases.TryGetValue(keyboardId, out var a) && !string.IsNullOrWhiteSpace(a) ? a : null;
+        }
+
+        public void SetAlias(string keyboardId, string alias)
+        {
+            if (string.IsNullOrWhiteSpace(alias))
+            {
+                _aliases.Remove(keyboardId);
+            }
+            else
+            {
+                _aliases[keyboardId] = alias.Trim();
+            }
+            SaveAliases();
+        }
+
+        public Dictionary<string, string> GetAllAliases() => _aliases;
+
+        private void LoadAliases()
+        {
+            try
+            {
+                if (File.Exists(_aliasesPath))
+                {
+                    var json = File.ReadAllText(_aliasesPath);
+                    if (!string.IsNullOrWhiteSpace(json))
+                    {
+                        var loaded = JsonSerializer.Deserialize<Dictionary<string, string>>(json, JsonOptions);
+                        if (loaded != null) _aliases = loaded;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to load keyboard aliases", ex);
+            }
+        }
+
+        private void SaveAliases()
+        {
+            try
+            {
+                Directory.CreateDirectory(_directory);
+                File.WriteAllText(_aliasesPath, JsonSerializer.Serialize(_aliases, JsonOptions));
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to save keyboard aliases", ex);
+            }
         }
 
         private void Load()
